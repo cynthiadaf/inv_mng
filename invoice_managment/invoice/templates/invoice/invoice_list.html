@@ -1,0 +1,26 @@
+<h1>My Invoices</h1>
+<p>{{invoices}}</p>
+<table>
+    <tr>
+        <th>Invoice Number</th>
+        <th>Date</th>
+        <th>Amount</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+    {% for invoice in invoices %}
+    <tr>
+        <td>{{ invoice.invoice_number }}</td>
+        <td>{{ invoice.date }}</td>
+        <td>{{ invoice.total_amount }}</td>
+        <td>{{ invoice.status }}</td>
+        <td>
+           Actions
+        </td>
+    </tr>
+    {% empty %} 
+    <tr>
+        <td colspan="5">No invoices found.</td> 
+    </tr>
+    {% endfor %}
+</table>
