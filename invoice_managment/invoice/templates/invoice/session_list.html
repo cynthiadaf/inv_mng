@@ -1,27 +1,42 @@
 <h1>Sessions</h1>
+<a href="{% url 'session-create' %}">Create New Session</a>
 
 <table>
     <tr>
         <th>Session ID</th>
-        <th>Start Time</th>
-        <th>End Time</th>
-        <th>Status</th>
+        <th>Client</th>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Location</th>
+        <th>Quantity</th>
+        <th>Session Length</th>
+        <th>Rate</th>
+        <th>Amount</th>
         <th>Actions</th>
     </tr>
     {% for session in sessions %}
     <tr>
         <td>{{ session.id }}</td>
-        <td>{{ session.start_time }}</td>
-        <td>{{ session.end_time }}</td>
-        <td>{{ session.status }}</td>
+        <td>{{ session.client.name }}</td>
+        <td>{{ session.date }}</td>
+        <td>{{ session.description }}</td>
+        <td>{{ session.location }}</td>
+        <td>{{ session.quantity }}</td>
+        <td>{{ session.session_length }}</td>
+        <td>{{ session.rate_per_session }}</td>
+        <td>{{ session.amount }}</td>
         <td>
-            <!-- Actions can be added here -->
-            View Details
-        </td>   
+            <a href="{% url 'session' session.id %}">View Details</a>
+        </td>
     </tr>
-    {% empty %} 
+    {% empty %}
     <tr>
-        <td colspan="5">No sessions found.</td>     
-    </tr>   
+        <td colspan="10">No sessions found.</td>
+    </tr>
     {% endfor %}
 </table>
+<!--{% if sessions %}
+    <h2>Total Amount: {{ total_amount }}</h2>
+{% else %}
+    <h2>No sessions available.</h2>
+{% endif %}-->

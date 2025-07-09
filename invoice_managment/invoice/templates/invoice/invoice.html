@@ -1,0 +1,44 @@
+<h1>Invoice Details</h1>
+<p>Invoice Number: {{ invoice.invoice_number }}</p>
+<p>Date: {{ invoice.date }}</p> 
+<p>Total Amount: {{ invoice.total_amount }}</p>
+<p>Status: {{ invoice.status }}</p> 
+
+<h2>Client Details</h2>
+<p>Client Name: {{ invoice.client.name }}</p>   
+<p>Client Email: {{ invoice.client.email }}</p>
+<p>Client Phone: {{ invoice.client.phone }}</p>     
+
+
+<h2>Sessions</h2>
+<table>
+    <tr>
+        <th>Session ID</th>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Location</th>
+        <th>Quantity</th>
+        <th>Session Length</th>
+        <th>Rate</th>
+        <th>Amount</th>
+    </tr>
+    {% for session in invoice.client.sessions.all %}
+    <tr>
+        <td>{{ session.id }}</td>
+        <td>{{ session.date }}</td>
+        <td>{{ session.description }}</td>
+        <td>{{ session.location }}</td>
+        <td>{{ session.quantity }}</td>
+        <td>{{ session.session_length }}</td>
+        <td>{{ session.rate_per_session }}</td>
+        <td>{{ session.amount }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="8">No sessions found for this client.</td>
+    </tr>
+    {% endfor %}
+</table>
+<a href="{% url 'session-create' %}">Create New Session</a>
+<a href="{% url 'invoice-pdf' invoice.id %}">Save PDF</a>
+<a href="{% url 'invoices' %}">Back to Invoices</a>

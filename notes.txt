@@ -1,0 +1,6 @@
+1. Bank details and other user details should automtically pull through into invoice  creator + invoice details
+2. Calculation for Session Calculation (Done)
+3. Calculation for total sessions
+4. Inoice Number should be primary id 
+5. Create Unique ID for each model (ID for Invoices, ID for Client, Description Date Concat for Session)
+6. On creation of invoice status can only be created then edit will all updates.

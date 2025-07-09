@@ -32,12 +32,27 @@ class Invoice(models.Model):
     #session data
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
+    client = models.ForeignKey('Client', on_delete=models.CASCADE, related_name='invoices', null=True, blank=True)
+
     def __str__(self):
         return f"Invoice {self.invoice_number} - {self.role}"
     
     class Meta:
         ordering = ['-date','invoice_number']  # Orders by date in descending order
 
+
+class Client(models.Model):
+    
+    name = models.CharField(max_length=100)
+    address = models.TextField()
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        ordering = ['name']  # Orders by name in ascending order
 
 class Company(models.Model):
     name = models.CharField(max_length=100)
@@ -52,14 +67,19 @@ class Company(models.Model):
         ordering = ['name']  # Orders by name in ascending order
 
 class Session(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='sessions')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='sessions', null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
     description = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
     quantity = models.PositiveIntegerField(default=1)
     session_length = models.DurationField() # Duration of the session in hours, minutes, and seconds
     rate_per_session = models.DecimalField(max_digits=10, decimal_places=2) # Rate per session in the currency of choice
-    amount = models.DecimalField(max_digits=10, decimal_places=2) # Total amount for the session
+    
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def save(self, *args, **kwargs):
+        self.amount = self.quantity * self.rate_per_session
+        super().save(*args, **kwargs)
 
 
     def __str__(self):

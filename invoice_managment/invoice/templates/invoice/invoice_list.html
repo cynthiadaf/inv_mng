@@ -1,5 +1,5 @@
 <h1>My Invoices</h1>
-<p>{{invoices}}</p>
+<a href="{% url 'invoice-create' %}">Create New Invoice</a>
 <table>
     <tr>
         <th>Invoice Number</th>
@@ -15,7 +15,8 @@
         <td>{{ invoice.total_amount }}</td>
         <td>{{ invoice.status }}</td>
         <td>
-           Actions
+           <a href="{% url 'invoice' invoice.id %}">View Details</a>
+           <a href="{% url 'invoice-pdf' invoice.id %}">Save PDF</a>
         </td>
     </tr>
     {% empty %} 

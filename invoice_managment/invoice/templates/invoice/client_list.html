@@ -9,14 +9,14 @@
         <th>Actions</th>
     </tr>
 
-    {% for company in companies %}
+    {% for client in clients %}
     <tr>
-        <td>{{ company.name }}</td>
-        <td>{{ company.email }}</td>
-        <td>{{ company.phone }}</td>
+        <td>{{ client.name }}</td>
+        <td>{{ client.email }}</td>
+        <td>{{ client.phone }}</td>
         <td>
             <!-- Actions can be added here -->
-            View Details
+            <a href="{% url 'client' client.id %}">View Details</a>
         </td>
     </tr>
 
@@ -26,3 +26,6 @@
     </tr>
     {% endfor %}
 </table>
+
+<a href="{% url 'client-create' %}">Create New Client</a>
+<a href="{% url 'session-create' %}">Create New Session</a>
