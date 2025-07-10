@@ -1,10 +1,12 @@
 from django.urls import path, include
-from . views import InvoiceList, ClientList, SessionList, InvoiceDetail, ClientDetail, SessionDetail,InvoiceCreate,ClientCreate, SessionCreate, invoice_pdf
-# from .views import InvoiceCreate, CompanyCreate, SessionCreate
-#from .views import 
+from . views import InvoiceList, ClientList, SessionList, InvoiceDetail, ClientDetail, SessionDetail,InvoiceCreate,ClientCreate, SessionCreate, invoice_pdf, CustomLoginView, RegisterView
+from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
     path('', InvoiceList.as_view(), name='invoices'),#this is for home page 
+    path('login/', CustomLoginView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),  # Redirect to login after logout
+    path('register/', RegisterView.as_view(), name='register'),  # Use the same view for registration
     path('invoice/', InvoiceList.as_view(), name='invoices'),
     path('invoice/<int:pk>/', InvoiceDetail.as_view(), name='invoice'),
     path('invoice/<int:pk>/pdf/', invoice_pdf, name='invoice-pdf'),

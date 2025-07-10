@@ -1,0 +1,8 @@
+<h1>Register</h1>
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Register</button>
+</form>
+<p>By registering, you agree to our <a href="">Terms of Service</a> and <a href="">Privacy Policy</a>.</p>
+<p>Already have an account? <a href="{% url 'login' %}">Login here</a></p>

@@ -1,13 +1,23 @@
 <h1>Invoice Details</h1>
-<p>Invoice Number: {{ invoice.invoice_number }}</p>
+<p>Invoice Number: {{ invoice.id }}</p>
 <p>Date: {{ invoice.date }}</p> 
 <p>Total Amount: {{ invoice.total_amount }}</p>
 <p>Status: {{ invoice.status }}</p> 
 
+
+<h1>Bank Details</h1>
+<p>Account Owner: {{ invoice.account_owner }}</p>
+<p>Bank Name: {{ invoice.bank_name }}</p>
+<p>Sort Code: {{ invoice.sort_code }}</p>
+<p>Account Number: {{ invoice.account_number }}</p>
+
 <h2>Client Details</h2>
 <p>Client Name: {{ invoice.client.name }}</p>   
 <p>Client Email: {{ invoice.client.email }}</p>
-<p>Client Phone: {{ invoice.client.phone }}</p>     
+<p>Client Phone: {{ invoice.client.phone }}</p>  
+
+
+
 
 
 <h2>Sessions</h2>
@@ -22,7 +32,7 @@
         <th>Rate</th>
         <th>Amount</th>
     </tr>
-    {% for session in invoice.client.sessions.all %}
+    {% for session in invoice.sessions.all %}
     <tr>
         <td>{{ session.id }}</td>
         <td>{{ session.date }}</td>

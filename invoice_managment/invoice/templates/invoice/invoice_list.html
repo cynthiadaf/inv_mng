@@ -1,3 +1,20 @@
+{% if request.user.is_authenticated %}
+    <p>{{request.user}}</p>
+    <form action="{% url 'logout' %}" method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+</form>
+{% else %}
+    <button><a href="{% url 'login'%}">Login</a></button>
+    <p><a href="">Sign Up</a></p>
+{% endif %}
+
+
+<hr>
+
+
+<a href="{% url 'clients' %}">Clients</a>   
+<a href="{% url 'sessions' %}">Sessions</a>
 <h1>My Invoices</h1>
 <a href="{% url 'invoice-create' %}">Create New Invoice</a>
 <table>
@@ -10,7 +27,7 @@
     </tr>
     {% for invoice in invoices %}
     <tr>
-        <td>{{ invoice.invoice_number }}</td>
+        <td>{{ invoice.id }}</td>
         <td>{{ invoice.date }}</td>
         <td>{{ invoice.total_amount }}</td>
         <td>{{ invoice.status }}</td>

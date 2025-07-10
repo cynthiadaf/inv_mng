@@ -1,6 +1,15 @@
-1. Bank details and other user details should automtically pull through into invoice  creator + invoice details
-2. Calculation for Session Calculation (Done)
-3. Calculation for total sessions
-4. Inoice Number should be primary id 
-5. Create Unique ID for each model (ID for Invoices, ID for Client, Description Date Concat for Session)
-6. On creation of invoice status can only be created then edit will all updates.
+1. Select from a list of sessions (client will be in the session ID name)
+2. Select the session instead of the client to resolve to the summing of values
+3. Update and Delete Functionality
+4. Move Login to Nav Bar
+6. Add date and time and using length you can create calendar views (in front end)
+
+8. Create another unique identifier for ease of selection of session
+
+9. Make sure to only add sessions that have not been added to future invoices. (or atleast filter when creating in front end)
+
+
+python manage.py runserver 
+
+python manage.py makemigrations
+python manage.py migrate
