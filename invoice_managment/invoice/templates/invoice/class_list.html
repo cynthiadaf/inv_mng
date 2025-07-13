@@ -1,0 +1,14 @@
+{% include "invoice/nav.html" %}
+{% load static %}
+<h1>Class List</h1>
+<ul>
+    {% for class in classes %}
+        <li><a href="{% url 'class' class.id %}">{{ class.description }}</a></li>
+    {% empty %}
+        <li>No classes found.</li>
+    {% endfor %}
+</ul>
+<form method="get" action="{% url 'class-create' %}">
+    <button type="submit">Create New Class</button>
+</form>
+

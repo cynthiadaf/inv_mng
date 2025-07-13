@@ -12,7 +12,9 @@
         <th>Session Length</th>
         <th>Rate</th>
         <th>Amount</th>
+        <th>Status</th>
         <th>Actions</th>
+        
     </tr>
     {% for session in sessions %}
     <tr>
@@ -25,6 +27,8 @@
         <td>{{ session.session_length }}</td>
         <td>{{ session.rate_per_session }}</td>
         <td>{{ session.amount }}</td>
+
+        <td>{{ session.status }}</td>
         <td>
             <a href="{% url 'session' session.id %}">View Details</a>
         </td>
@@ -35,6 +39,8 @@
     </tr>
     {% endfor %}
 </table>
+{% include "invoice/nav.html" %}
+{% load static %}
 <!--{% if sessions %}
     <h2>Total Amount: {{ total_amount }}</h2>
 {% else %}

@@ -1,9 +1,9 @@
 from django.urls import path, include
-from . views import InvoiceList, ClientList, SessionList, InvoiceDetail, ClientDetail, SessionDetail,InvoiceCreate,ClientCreate, SessionCreate, invoice_pdf, CustomLoginView, RegisterView
+from . views import InvoiceList, ClientList, SessionList, InvoiceDetail, ClientDetail, SessionDetail,InvoiceCreate,ClientCreate, SessionCreate, invoice_pdf, CustomLoginView, RegisterView, HomePageView, ClassList, ClassDetail, ClassCreate
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
-    path('', InvoiceList.as_view(), name='invoices'),#this is for home page 
+    path('', HomePageView.as_view(), name='home'),  # Home page
     path('login/', CustomLoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(next_page='login'), name='logout'),  # Redirect to login after logout
     path('register/', RegisterView.as_view(), name='register'),  # Use the same view for registration
@@ -17,6 +17,9 @@ urlpatterns = [
     path('invoice/create/', InvoiceCreate.as_view(), name='invoice-create'),
     path('client/create/', ClientCreate.as_view(), name='client-create'),
     path('session/create/', SessionCreate.as_view(), name='session-create'),
+    path('class/', ClassList.as_view(), name='classes'),
+    path('class/<int:pk>/', ClassDetail.as_view(), name='class'),
+    path('class/create/', ClassCreate.as_view(), name='class-create'),
     #path('client/', include('invoice.client.urls')),
     #path('session/', include('invoice.session.urls')),
 ]

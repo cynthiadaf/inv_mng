@@ -37,10 +37,10 @@ class Invoice(models.Model):
     #user data
     date = models.DateField()
     name = models.CharField(max_length=100)  # Default to the username of the user
-    role = models.CharField(max_length=100,default='')  # Default to the role of the user
+    role = models.CharField(max_length=100, blank=True, null=True)
     address = models.TextField(default='')
-    postal_code = models.CharField(max_length=20,default='')  # Default to an empty string if not provided
-    email = models.EmailField(default='email@example.com')  # Default to the email of the user
+    postal_code = models.CharField(max_length=20,default='',blank=True, null=True)  # Default to an empty string if not provided
+    email = models.EmailField(default='email@example.com', blank=True, null=True)  # Default to the email of the user
     status = models.CharField(
         max_length=10,
         choices=Status.choices,
@@ -48,10 +48,10 @@ class Invoice(models.Model):
     )
 
     #bank data
-    account_owner = models.CharField(max_length=100,default='') #Not to be confused with the user name
-    bank_name = models.CharField(max_length=100,default='')
-    sort_code = models.CharField(max_length=6,default='')
-    account_number = models.CharField(max_length=20, default='')  # Default to an empty string if not provided
+    account_owner = models.CharField(max_length=100,default='', blank=True, null=True) #Not to be confused with the user name
+    bank_name = models.CharField(max_length=100,default='', blank=True, null=True)
+    sort_code = models.CharField(max_length=6,default='', blank=True, null=True)
+    account_number = models.CharField(max_length=20, default='', blank=True, null=True)  # Default to an empty string if not provided
 
     #session data
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -61,7 +61,7 @@ class Invoice(models.Model):
     # ...rest of your model...
 
     def update_total_amount(self):
-        total = sum(session.amount for session in self.sessions.all())
+        total = sum(session.rate_per_session or 0 for session in self.sessions.all())
         if self.total_amount != total:
             Invoice.objects.filter(pk=self.pk).update(total_amount=total)
             self.total_amount = total
@@ -131,21 +131,44 @@ class Company(models.Model):
 class Session(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='sessions', null=True, blank=True)
-    date = models.DateTimeField(auto_now_add=True)
+    class_obj = models.ForeignKey('Class', on_delete=models.CASCADE, related_name='sessions', null=True, blank=True)
     description = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
-    quantity = models.PositiveIntegerField(default=1)
-    session_length = models.DurationField() # Duration of the session in hours, minutes, and seconds
-    rate_per_session = models.DecimalField(max_digits=10, decimal_places=2) # Rate per session in the currency of choice
-    
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    session_length = models.DurationField(blank=True, null=True)
+    rate_per_session = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('invoiced', 'Invoiced'),
+    ]
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
     def save(self, *args, **kwargs):
-        self.amount = self.quantity * self.rate_per_session
+        creating = self._state.adding
+        self.amount = self.rate_per_session
+        self.description = self.class_obj.description if self.class_obj else self.description
+        self.location = self.class_obj.location if self.class_obj else self.location
+        self.session_length = self.class_obj.length if self.class_obj else self.session_length
+        self.rate_per_session = self.class_obj.rate_per_class if self.class_obj else self.rate_per_session
         super().save(*args, **kwargs)
-        # Update total_amount for all invoices of this client
-        for invoice in self.client.invoices.all():
-            invoice.update_total_amount()
+        if creating:
+            # Increment participants if creating a new session
+            self.class_obj.participants += 1
+            self.class_obj.save()
+
+    def delete(self, *args, **kwargs):
+        # Decrement participants when deleting a session
+        class_obj = self.class_obj
+        super().delete(*args, **kwargs)
+        class_obj.participants = max(0, class_obj.participants - 1)
+        class_obj.save()
+
+    def __str__(self):
+        return f"Session for {self.client} in {self.class_obj}"
+
+    class Meta:
+        ordering = ['-description']
 
 
     def __str__(self):
@@ -153,3 +176,20 @@ class Session(models.Model):
     
     class Meta:
         ordering = ['-description']  # Orders by expire date in descending order
+
+class Class(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # Add this line
+    description = models.TextField(blank=True, null=True)
+    date = models.DateField()
+    time = models.TimeField()
+    location = models.CharField(max_length=255, blank=True, null=True)
+    length = models.DurationField()  # Duration of the class in hours, minutes, and seconds
+    rate_per_class = models.DecimalField(max_digits=10, decimal_places=2)
+    participants = models.PositiveIntegerField(default=0)
+    maximum_participants = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return self.description
+
+    class Meta:
+        ordering = ['description']  # Orders by name in ascending order

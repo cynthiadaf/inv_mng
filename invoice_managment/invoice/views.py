@@ -5,7 +5,8 @@ from django.views.generic import DetailView, CreateView, UpdateView, DeleteView,
 from django.urls import reverse_lazy
 from django.forms import inlineformset_factory
 from django import forms
-from .models import Invoice, Client, Session
+from django.db import models
+from .models import Invoice, Client, Session, Class
 from xhtml2pdf import pisa
 from django.template.loader import get_template
 from django.contrib.auth.views import LoginView
@@ -14,10 +15,12 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate
+from django.views.generic import TemplateView
 
 # Create your views here.
 
-#https://stackoverflow.com/questions/62935406/how-to-make-a-signup-view-using-class-based-views-in-django ?
+class HomePageView(TemplateView):
+    template_name = 'invoice/home.html'
 
 class CustomUserCreationForm(UserCreationForm):
     role = forms.CharField(max_length=50, required=False)
@@ -87,6 +90,14 @@ class SessionList(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         context['sessions'] = context['sessions'].filter(user=self.request.user)  # Filter sessions by the logged-in user
         return context
+    
+class ClassList(LoginRequiredMixin, ListView):
+    model = Class
+    context_object_name = 'classes'  # Add this line
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['classes'] = context['classes'].filter(user=self.request.user)  # Filter classes by the logged-in user
+        return context
 
 class InvoiceDetail(LoginRequiredMixin, DetailView):
     model = Invoice
@@ -104,22 +115,26 @@ class SessionDetail(LoginRequiredMixin, DetailView):
     context_object_name = 'session'
     template_name = 'invoice/session.html'  # Specify the template name if needed
 
+class ClassDetail(LoginRequiredMixin, DetailView):
+    model = Class
+    context_object_name = 'class'
+    template_name = 'invoice/class.html'  # Specify the template name if needed
+
 '''The following classes are used to create, update, and delete invoices, companies, and sessions.
 These classes inherit from Django's generic views to handle the respective operations.'''
 
+# views.py
 class InvoiceForm(forms.ModelForm):
     class Meta:
         model = Invoice
-        fields = ['date', 'sessions']
-        widgets = {
-            'sessions': forms.SelectMultiple,
-        }
+        fields = ['date', 'client']  # Only select date and client
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user:
-            self.fields['sessions'].queryset = Session.objects.filter(user=user)
+            self.fields['client'].queryset = Client.objects.filter(user=user)
+# views.py
 class InvoiceCreate(LoginRequiredMixin, CreateView):
     model = Invoice
     form_class = InvoiceForm
@@ -134,20 +149,21 @@ class InvoiceCreate(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         response = super().form_valid(form)
-        sessions = form.cleaned_data.get('sessions')
-        if sessions:
-            self.object.sessions.set(sessions)
-            # Set client from the first session (all sessions should have the same client)
-            session_client = sessions.first().client if sessions.exists() else None
-            if session_client and self.object.client != session_client:
-                self.object.client = session_client
-                self.object.save(update_fields=['client'])
-            self.object.update_total_amount()
+        # Get all sessions for this client and user that are not yet invoiced
+        sessions = Session.objects.filter(
+            client=form.cleaned_data['client'],
+            user=self.request.user,
+            status='pending',  # Only sessions not yet invoiced
+            invoices=None      # Sessions not linked to any invoice
+        )
+        self.object.sessions.set(sessions)
+        # Set status to 'invoiced' for each session and save
+        for session in sessions:
+            session.status = 'invoiced'
+            session.save()
+        self.object.update_total_amount()
         return response
-    
-   
-
-class ClientCreate(LoginRequiredMixin,CreateView):
+class ClientCreate(LoginRequiredMixin, CreateView):
     model = Client
     fields = ['name', 'address', 'phone', 'email']  # Replace with your actual fields
     success_url = '/client/'
@@ -158,20 +174,39 @@ class ClientCreate(LoginRequiredMixin,CreateView):
         form.instance.user = self.request.user
         return super(ClientCreate, self).form_valid(form)
 
-class SessionCreate(LoginRequiredMixin,CreateView):
+class SessionCreate(LoginRequiredMixin, CreateView):
     model = Session
-    fields = ['client', 'description', 'location', 'quantity', 'session_length', 'rate_per_session']
+    fields = ['client', 'class_obj']
     success_url = '/session/'
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
+        # Only show classes that are not full
+        form.fields['class_obj'].queryset = Class.objects.filter(user=self.request.user, participants__lt=models.F('maximum_participants'))
         # Only show clients for the current user
         form.fields['client'].queryset = Client.objects.filter(user=self.request.user)
         return form
 
     def form_valid(self, form):
+        class_obj = form.cleaned_data['class_obj']
+        if class_obj.participants >= class_obj.maximum_participants:
+            form.add_error('class_obj', 'This class is already full.')
+            return self.form_invalid(form)
+        # Optionally, prevent duplicate client bookings for the same class
+        if Session.objects.filter(class_obj=class_obj, client=form.cleaned_data['client']).exists():
+            form.add_error('client', 'This client is already booked for this class.')
+            return self.form_invalid(form)
         form.instance.user = self.request.user
-        return super(SessionCreate, self).form_valid(form)
+        return super().form_valid(form)
+    
+class ClassCreate(LoginRequiredMixin,CreateView):   
+    model = Class
+    fields = ['description', 'date', 'time', 'location', 'length', 'rate_per_class', 'maximum_participants']
+    success_url = '/class/'
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super(ClassCreate, self).form_valid(form)
 
 class InvoiceUpdate(LoginRequiredMixin,UpdateView):
     model = Invoice

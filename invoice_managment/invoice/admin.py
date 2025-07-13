@@ -1,11 +1,12 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from .models import Invoice, Company, Session,Client, UserProfile
+from .models import Invoice, Company, Session,Client, UserProfile, Class
 admin.site.register(Company)
 admin.site.register(Session)
 admin.site.register(Invoice)
 admin.site.register(Client)
 admin.site.register(UserProfile)
+admin.site.register(Class)
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile

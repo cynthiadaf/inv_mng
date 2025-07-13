@@ -1,0 +1,11 @@
+<h1>Class Detail</h1>
+<p><strong>Description:</strong> {{ class.description }}</p>
+<p><strong>Location:</strong> {{ class.location }}</p>
+<p><strong>Date:</strong> {{ class.date }}</p>
+<p><strong>Time:</strong> {{ class.time }}</p>
+<p><strong>Length:</strong> {{ class.length }}</p>
+<p><strong>Rate per Class:</strong> {{ class.rate_per_class }}</p>
+<p><strong>Created By:</strong> {{ class.user.username }}</p>
+<a href="{% url 'classes' %}">Back to Class List</a>
+{% include "invoice/nav.html" %}
+{% load static %}

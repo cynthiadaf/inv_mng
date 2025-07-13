@@ -1,1 +1,7 @@
-<h1>Company Detail: {{ company.id }}</h1>
+{% include "invoice/nav.html" %}
+
+<h1>Client Detail: {{ client.id }}</h1>
+<p><strong>Name:</strong> {{ client.name }}</p>
+<p><strong>Email:</strong> {{ client.email }}</p>   
+<p><strong>Phone:</strong> {{ client.phone }}</p>
+<p><strong>Address:</strong> {{ client.address }}</p>
