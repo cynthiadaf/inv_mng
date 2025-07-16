@@ -137,6 +137,7 @@ class Session(models.Model):
     session_length = models.DurationField(blank=True, null=True)
     rate_per_session = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    date = models.DateField(null=True, blank=True)  # Automatically set the date when the session is created
 
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -148,6 +149,7 @@ class Session(models.Model):
         creating = self._state.adding
         self.amount = self.rate_per_session
         self.description = self.class_obj.description if self.class_obj else self.description
+        self.date = self.class_obj.date if self.class_obj else self.date
         self.location = self.class_obj.location if self.class_obj else self.location
         self.session_length = self.class_obj.length if self.class_obj else self.session_length
         self.rate_per_session = self.class_obj.rate_per_class if self.class_obj else self.rate_per_session
@@ -178,6 +180,11 @@ class Session(models.Model):
         ordering = ['-description']  # Orders by expire date in descending order
 
 class Class(models.Model):
+    CLASS_TYPE_CHOICES = [
+        ('class', 'Class'),
+        ('event', 'Event'),
+        ('workshop', 'Workshop'),
+    ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)  # Add this line
     description = models.TextField(blank=True, null=True)
     date = models.DateField()
@@ -187,6 +194,8 @@ class Class(models.Model):
     rate_per_class = models.DecimalField(max_digits=10, decimal_places=2)
     participants = models.PositiveIntegerField(default=0)
     maximum_participants = models.PositiveIntegerField(default=1)
+    type = models.CharField(max_length=20, choices=CLASS_TYPE_CHOICES, default='class')
+    
 
     def __str__(self):
         return self.description
