@@ -5,3 +5,6 @@
 <p><strong>Email:</strong> {{ client.email }}</p>   
 <p><strong>Phone:</strong> {{ client.phone }}</p>
 <p><strong>Address:</strong> {{ client.address }}</p>
+
+<a href="{% url 'client-update' client.id %}">Edit Client</a>
+<a href="{% url 'client-list' %}">Back to Client List</a>

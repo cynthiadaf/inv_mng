@@ -10,5 +10,8 @@
 <p>Description: {{ session.description }}</p>
 <p>Status: {{ session.status }}</p>
 
+<a href="{% url 'session-update' session.id %}">Edit Session</a>
+<a href="{% url 'sessions' %}">Back to Session List</a>
+
 {% include "invoice/nav.html" %}
 {% load static %}

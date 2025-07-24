@@ -1,0 +1,33 @@
+<!-- trainer_dashboard.html -->
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Trainer Dashboard</h1>
+
+<p>Manage your clients effectively.</p>
+<a href="{% url 'trainer_client_list' %}">View Clients</a>
+<a href="{% url 'trainer_client_create' %}">Create New Client</a>
+
+<p>Manage your sessions effectively.</p>
+<a href="{% url 'trainer_session_list' %}">View Sessions</a>
+<a href="{% url 'session_create' %}">Create New Session</a>
+
+<p>Manage your bookings effectively.</p>
+<a href="{% url 'booking_list' %}">View Bookings</a>
+<a href="{% url 'booking_create' %}">Create New Booking (Add client to a class )</a>
+
+
+<p>Manage your invoices effectively</p>
+<a href="">View Invoices</a>
+<a href="">Create New Invoice</a>
+
+
+  <h2>Your Sessions</h2>
+  <a href="{% url 'session_create' %}">Create New Session</a>
+  <ul>
+    {% for session in sessions %}
+      <li>
+        <a href="{% url 'session_detail' session.id %}">{{ session.title }}</a> on {{ session.date }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}

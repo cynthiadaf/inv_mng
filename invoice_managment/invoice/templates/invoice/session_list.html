@@ -29,6 +29,7 @@
         <td>{{ session.status }}</td>
         <td>
             <a href="{% url 'session' session.id %}">View Details</a>
+            <a href="{% url 'session-update' session.id %}">Edit</a>
         </td>
     </tr>
     {% empty %}

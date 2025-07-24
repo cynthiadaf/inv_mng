@@ -215,13 +215,18 @@ class InvoiceUpdate(LoginRequiredMixin,UpdateView):
 
 class ClientUpdate(LoginRequiredMixin,UpdateView):
     model = Client
-    fields = ['field1', 'field2', ...]  # Replace with your actual fields
-    success_url = '/clients/'
+    fields = ['name', 'address', 'phone', 'email']  # Replace with your actual fields
+    success_url = reverse_lazy('clients')
 
 class SessionUpdate(LoginRequiredMixin,UpdateView):
     model = Session
-    fields = ['field1', 'field2', ...]  # Replace with your actual fields
-    success_url = '/sessions/'
+    fields = ['client', 'class_obj']
+    success_url = reverse_lazy('sessions')
+
+class ClassUpdate(LoginRequiredMixin,UpdateView):
+    model = Class
+    fields = ['description', 'date', 'time', 'location', 'length', 'rate_per_class', 'maximum_participants']
+    success_url = reverse_lazy('classes')  
 
 class InvoiceDelete(LoginRequiredMixin,DeleteView):
     model = Invoice
@@ -234,6 +239,10 @@ class ClientDelete(LoginRequiredMixin,DeleteView):
 class SessionDelete(DeleteView):
     model = Session
     success_url = '/sessions/'
+
+class ClassDelete(LoginRequiredMixin,DeleteView):
+    model = Class
+    success_url = '/classes/'
 
 
 '''

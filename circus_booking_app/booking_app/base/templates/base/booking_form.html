@@ -1,0 +1,9 @@
+{% extends 'base/base.html' %}
+{% block content %}
+  <h2>Add Client to Session</h2>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add Booking</button>
+  </form>
+{% endblock %}

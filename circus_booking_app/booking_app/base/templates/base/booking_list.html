@@ -1,0 +1,25 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Bookings</h1>
+
+<table border="1">
+  <tr>
+    <th>Session</th>
+    <th>Client</th>
+    <th>Status</th>
+  </tr>
+  {% for booking in bookings %}
+    <tr>
+      <td>{{ booking.session.title }} ({{ booking.session.date }} {{ booking.session.time }})</td>
+      <td>{{ booking.client.user.get_full_name|default:booking.client.user.username }}</td>
+      <td>{{ booking.status }}</td>
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="3">No bookings found.</td>
+    </tr>
+  {% endfor %}
+</table>
+
+<a href="{% url 'booking_create' %}">Book a new session</a>
+{% endblock %}

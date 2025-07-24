@@ -1,0 +1,9 @@
+<h1>Client Details</h1>
+<p>Trainer: {{ request.user.trainerprofile.business_name }}</p>
+<p>Client: {{ client.user.get_username }}</p>
+<p>Full Name: {{ client.user.get_full_name }}</p>
+<p>Email: {{ client.user.email }}</p>
+<p>Can Self Book: {{ client.can_self_book|yesno:"Yes,No" }}</p>
+
+<a href="{% url 'trainer_client_edit' client.id %}">Edit</a>
+<a href="{% url 'trainer_client_delete' client.id %}">Delete</a>

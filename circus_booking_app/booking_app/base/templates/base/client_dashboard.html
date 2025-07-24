@@ -1,0 +1,42 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Client Dashboard</h1>
+<p>Welcome, {{ request.user.get_full_name|default:request.user.username }}!</p>
+
+<h2>Your Trainers</h2>
+  <ul>
+    {% for trainer in client.trainers.all %}
+      <li>{{ trainer.business_name }}</li>
+    {% empty %}
+      <li>No trainers assigned.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
+
+
+<!-- client_dashboard.html -->
+ <!---
+ '''
+
+
+  <h2>Available Sessions</h2>
+  <ul>
+    {% for session in sessions %}
+      <li>
+        <strong>{{ session.title }}</strong> on {{ session.date }}<br>
+        {% if session.is_full %}
+          <em>Session Full</em>
+        {% else %}
+          <form method="post" action="{% url 'book_session' session.id %}">
+            {% csrf_token %}
+            <button type="submit">Book</button>
+          </form>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+
+-->
+
+
+

@@ -1,14 +1,36 @@
 {% include "invoice/nav.html" %}
 {% load static %}
 <h1>Class List</h1>
-<ul>
-    {% for class in classes %}
-        <li><a href="{% url 'class' class.id %}">{{ class.description }}</a></li>
-    {% empty %}
-        <li>No classes found.</li>
-    {% endfor %}
-</ul>
-<form method="get" action="{% url 'class-create' %}">
-    <button type="submit">Create New Class</button>
-</form>
 
+<table>
+    <tr>
+        <th>Description</th>
+        <th>Type</th>
+        <th>Date</th>
+        <th>Time</th>
+        <th>Location</th>
+        <th>Participants</th>
+        <th>Actions</th>
+    </tr>
+    {% for class in classes %}
+    <tr>
+        <td>{{ class.description }}</td>
+        <td>{{ class.get_type_display }}</td>
+        <td>{{ class.date }}</td>
+        <td>{{ class.time }}</td>
+        <td>{{ class.location }}</td>
+        <td>{{ class.participants }}/{{ class.maximum_participants }}</td>
+        <td>
+            <a href="{% url 'class' class.id %}">View Details</a>
+            <a href="{% url 'class-update' class.id %}">Edit</a>
+            <a href="">Delete</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="7">No classes found.</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="{% url 'class-create' %}">Create New Class</a>

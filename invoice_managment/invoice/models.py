@@ -201,4 +201,4 @@ class Class(models.Model):
         return self.description
 
     class Meta:
-        ordering = ['description']  # Orders by name in ascending order
+        ordering = ['-date', '-time']  # Orders by date and time in ascending order

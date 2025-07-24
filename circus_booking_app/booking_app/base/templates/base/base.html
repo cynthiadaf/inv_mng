@@ -1,0 +1,34 @@
+<html>
+<head>
+  <title>Trainer Booking App</title>
+</head>
+<body>
+ 
+  {% if request.user.is_authenticated %}
+  <form action="{% url 'logout' %}" method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit">Logout</button>
+  </form>
+    <p>{{request.user}}</p>
+  {% else %}
+  <a href="{% url 'login' %}">Login</a> 
+  {% endif %}
+  {% if messages %}
+    <ul>
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+
+  {% if request.user.is_authenticated %}
+    {% if request.user.trainerprofile %}
+      <a href="{% url 'trainer_dashboard' %}">Trainer Dashboard</a>
+    {% elif request.user.client %}
+      <a href="{% url 'client_dashboard' %}">Client Dashboard</a>
+    {% endif %}
+  {% endif %}
+</body>
+</html>

@@ -1,15 +1,67 @@
-1. Select from a list of sessions (client will be in the session ID name)
-2. Select the session instead of the client to resolve to the summing of values
-3. Update and Delete Functionality
-4. Move Login to Nav Bar
-6. Add date and time and using length you can create calendar views (in front end)
+NEXT STEPS
+new repo!
+- Finish CRUD for booking
+- Trainer book a client through a specific session
+- Trainer Detail page
 
-8. Create another unique identifier for ease of selection of session
+- Allow Clients 
+-- Create their account
+-- Be added to a class by a teacher
+-- View sessions
+-- Create their own session
+-- Update their own session
+-- Delete their own session
 
-9. Make sure to only add sessions that have not been added to future invoices. (or atleast filter when creating in front end)
+
+
+
+LONG TERM
+Separate the Log in as client and log in as trainer UX
+Client can see trainer pages and trainers cant see client pages
+Trainers can create an account for a client and clients can log in to book stuff (or clients can create their own account)
+
+
+- create templates for each point in user journey
+- Add buttons that display the templates
+- Display the templates view (see HomePage view)
+- Add the urls to access the views
+- Connect the urls to the buttons
+
+
+AUTH & SAFETY
+-Enable the permissions Via Django Admin
+-Send email confirmation about sign ups
+
+**
+Review To-Do list
+
+
+
+
+
+
+
+
+
+IMPORTANT
+- Make sure you can't add participants to a full class, without removing one
+- Make sure to only add sessions that have not been added to future invoices. (or atleast filter when creating in front end)
+- Create multiple sessions at once option
+- Can't create two sessions hapeening at the same time.
+- Add Logo to invoices
+- What if a trainer wants to add their client and they are already in the DB due to another trainer.
+-- It should say the client email is already registered but then allow them to add them to the new trainer.
+-- This is where the select client and client can self book form would be most useful.
+--If the client email exists re-direct to the (Client select and selfbooking form instead).
+
+
 
 
 python manage.py runserver 
 
 python manage.py makemigrations
 python manage.py migrate
+
+-Update Client, Class and User Profile
+-Delete, Invoices and Sessions
+

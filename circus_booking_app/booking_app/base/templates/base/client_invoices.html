@@ -1,0 +1,13 @@
+<!-- client_invoices.html -->
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Your Invoices</h2>
+  <ul>
+    {% for invoice in invoices %}
+      <li>
+        Total: {{ invoice.total }} | Sent: {{ invoice.sent }} | Paid: {{ invoice.paid }} | Special: {{ invoice.special }}<br>
+        Created on: {{ invoice.created_at }}
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}
