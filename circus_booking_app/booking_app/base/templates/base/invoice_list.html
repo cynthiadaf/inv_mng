@@ -1,0 +1,46 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>All Invoices</h1>
+<table border="1">
+    <tr>
+        <th>Client</th>
+        <th>Trainer</th>
+        <th>Total</th>
+        <th>Sent</th>
+        <th>Paid</th>
+        <th>Special</th>
+        <th>Created At</th>
+        <th>Bookings</th>
+        <th>Actions</th>
+    </tr>
+    {% for invoice in invoices %}
+    <tr>
+        <td>{{ invoice.client.user.get_full_name|default:invoice.client.user.username }}</td>
+        <td>{{ invoice.trainer.business_name }}</td>
+        <td>{{ invoice.total }}</td>
+        <td>{{ invoice.sent|yesno:"Yes,No" }}</td>
+        <td>{{ invoice.paid|yesno:"Yes,No" }}</td>
+        <td>{{ invoice.special|yesno:"Yes,No" }}</td>
+        <td>{{ invoice.created_at|date:"Y-m-d H:i" }}</td>
+        <td>
+            {% for booking in invoice.bookings.all %}
+                {{ booking.session.title }} ({{ booking.session.date }})<br>
+            {% empty %}
+                No bookings
+            {% endfor %}
+        </td>
+        <td>
+            <a href="{% url 'invoice_detail' invoice.id %}">View</a>
+            <a href="{% url 'invoice_edit' invoice.id %}">Edit</a>
+            <a href="{% url 'invoice_delete' invoice.id %}">Delete</a>
+            
+            
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="8">No invoices found.</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

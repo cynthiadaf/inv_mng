@@ -2,7 +2,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Client, TrainerProfile
+from .models import Client, TrainerProfile, Invoice
 
 class TrainerRegisterForm(UserCreationForm):
     business_name = forms.CharField(max_length=255, required=True)
@@ -105,3 +105,18 @@ class TrainerEditClientForm(forms.ModelForm):
             user.save()
             client.save()
         return client
+    
+class InvoiceCreateForm(forms.Form):
+    client = forms.ModelChoiceField(queryset=Client.objects.all(), required=True)
+    date = forms.DateField(required=True, widget=forms.SelectDateWidget)
+
+
+class InvoiceUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Invoice
+        fields = ['sent', 'paid', 'special']
+        widgets = {
+            'sent': forms.CheckboxInput(),
+            'paid': forms.CheckboxInput(),
+            'special': forms.CheckboxInput(),
+        }

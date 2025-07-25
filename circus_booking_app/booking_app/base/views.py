@@ -17,10 +17,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth import get_user_model
+from decimal import Decimal
 
 
-from .forms import TrainerRegisterForm, ClientRegisterForm,  TrainerAddClientForm, TrainerEditClientForm, TrainerProfileForm
+from .forms import InvoiceCreateForm, InvoiceUpdateForm, TrainerRegisterForm, ClientRegisterForm,  TrainerAddClientForm, TrainerEditClientForm, TrainerProfileForm
 from .models import TrainerProfile
+
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from django.http import HttpResponse
 
 
 class HomePageView(TemplateView):
@@ -648,7 +653,7 @@ class SessionBookingCreateView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.session = get_object_or_404(Session, id=self.kwargs['pk'], trainer=request.user.trainerprofile)
-        # Only clients for this trainer not already booked for this session
+        # Only clients for this trainer not already booked for THIS session
         already_booked = Booking.objects.filter(session=self.session).values_list('client_id', flat=True)
         self.clients_qs = Client.objects.filter(trainers=request.user.trainerprofile).exclude(id__in=already_booked)
         if not self.clients_qs.exists():
@@ -686,9 +691,14 @@ class BookingListView(LoginRequiredMixin, ListView):
     model = Booking
     template_name = 'base/booking_list.html'
     context_object_name = 'bookings'
-    def get_queryset(self):
-        return Booking.objects.filter(session__trainer=self.request.user.trainerprofile).select_related('client', 'session')
 
+    def get_queryset(self):
+        trainer = self.request.user.trainerprofile
+        # Only show bookings for clients assigned to this trainer
+        return Booking.objects.filter(
+            session__trainer=trainer,
+            client__in=Client.objects.filter(trainers=trainer)
+        ).select_related('client', 'session')
 
 class BookingCreateView(LoginRequiredMixin, CreateView):
     model = Booking
@@ -701,8 +711,22 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
         sessions = Session.objects.filter(trainer=self.request.user.trainerprofile)
         available_sessions = [s.id for s in sessions if not s.is_full()]
         form.fields['session'].queryset = sessions.filter(id__in=available_sessions)
-        # Only clients for this trainer
-        form.fields['client'].queryset = Client.objects.filter(trainers=self.request.user.trainerprofile)
+        # Only clients for this trainer not already booked for the selected session
+        if 'session' in form.fields:
+            session_field = form.fields['session']
+            session_qs = session_field.queryset
+            # If a session is pre-selected, exclude clients already booked for it
+            if self.request.method == 'POST':
+                session_id = self.request.POST.get('session')
+                if session_id:
+                    already_booked = Booking.objects.filter(session_id=session_id).values_list('client_id', flat=True)
+                    form.fields['client'].queryset = Client.objects.filter(trainers=self.request.user.trainerprofile).exclude(id__in=already_booked)
+                else:
+                    form.fields['client'].queryset = Client.objects.filter(trainers=self.request.user.trainerprofile)
+            else:
+                form.fields['client'].queryset = Client.objects.filter(trainers=self.request.user.trainerprofile)
+        else:
+            form.fields['client'].queryset = Client.objects.filter(trainers=self.request.user.trainerprofile)
         return form
 
     def form_valid(self, form):
@@ -786,3 +810,137 @@ class BookingDeleteView(LoginRequiredMixin, DeleteView):
 
 
 
+class InvoiceListView(LoginRequiredMixin, ListView):
+    model = Invoice
+    template_name = 'base/invoice_list.html'
+    context_object_name = 'invoices'
+
+    def get_queryset(self):
+        return Invoice.objects.filter(trainer=self.request.user.trainerprofile)
+    
+
+class InvoiceCreateView(LoginRequiredMixin, FormView):
+    template_name = 'base/invoice_create.html'
+    form_class = InvoiceCreateForm
+    success_url = reverse_lazy('invoice_list')
+
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Only show clients assigned to this trainer
+        trainer = self.request.user.trainerprofile
+        form.fields['client'].queryset = Client.objects.filter(trainers=trainer)
+        return form
+
+    def form_valid(self, form):
+        client = form.cleaned_data['client']
+        date = form.cleaned_data['date']
+        trainer = self.request.user.trainerprofile
+
+        # Get all 'booked' bookings for this client AFTER the given date and for this trainer
+        bookings = Booking.objects.filter(
+            client=client,
+            session__trainer=trainer,
+            status='booked',
+            session__date__gte=date
+        )
+
+        
+        total_value = 0
+        for b in bookings:
+            total_value += b.session.price 
+        
+        if not bookings.exists():
+            messages.error(self.request, "No eligible bookings found for this client after the selected date.")
+            return redirect('invoice_list')
+
+        # Create invoice
+        invoice = Invoice.objects.create(
+            client=client,
+            trainer=trainer,
+            total=0  # will be set below
+        )
+        invoice.bookings.set(bookings)
+        # Set booking status to 'invoice_generated'
+        bookings.update(status='invoice_generated')
+        # Calculate total
+       
+       
+        invoice.total = total_value
+       
+        invoice.save()
+        
+
+        messages.success(self.request, f"Invoice created for {client.user.get_full_name() or client.user.username}.")
+        return super().form_valid(form)
+    
+class InvoiceDetailView(LoginRequiredMixin, DetailView):
+    model = Invoice
+    template_name = 'base/invoice_detail.html'
+    context_object_name = 'invoice'
+
+    def get_object(self, queryset=None):
+        invoice = super().get_object(queryset)
+        if invoice.trainer != self.request.user.trainerprofile:
+            raise HttpResponseForbidden("You do not have permission to view this invoice.")
+        return invoice  
+    
+class InvoiceUpdateView(LoginRequiredMixin, UpdateView):    
+    model = Invoice
+    form_class = InvoiceUpdateForm
+    template_name = 'base/invoice_form.html'
+    success_url = reverse_lazy('invoice_list')
+
+    def get_object(self, queryset=None):
+        invoice = super().get_object(queryset)
+        if invoice.trainer != self.request.user.trainerprofile:
+            raise HttpResponseForbidden("You do not have permission to edit this invoice.")
+        return invoice
+
+    def form_valid(self, form):
+        messages.success(self.request, "Invoice updated successfully.")
+        return super().form_valid(form)
+
+class InvoiceDeleteView(LoginRequiredMixin, DeleteView):
+    model = Invoice
+    template_name = 'base/invoice_confirm_delete.html'
+    success_url = reverse_lazy('invoice_list')
+
+    def post(self, request, *args, **kwargs):
+        print("InvoiceDeleteView.post called")
+        return self.delete(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
+        invoice = super().get_object(queryset)
+        if invoice.trainer != self.request.user.trainerprofile:
+            raise HttpResponseForbidden("You do not have permission to delete this invoice.")
+        return invoice
+
+    def delete(self, request, *args, **kwargs):
+        print("InvoiceDeleteView.delete called")
+        invoice = self.get_object()
+        related_bookings = list(invoice.bookings.all())
+        for booking in related_bookings:
+            print(f"Resetting booking {booking.id} status from {booking.status} to 'booked'")
+            booking.status = 'booked'
+            booking.save()
+        response = super().delete(request, *args, **kwargs)
+        messages.success(request, "Invoice deleted successfully.")
+        return response
+    
+
+
+
+def render_to_pdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html = template.render(context_dict)
+    response = HttpResponse(content_type='application/pdf')
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('We had some errors <pre>' + html + '</pre>')
+    return response
+
+def invoice_pdf(request, pk):
+    invoice = Invoice.objects.get(pk=pk)
+    context = {'invoice': invoice}
+    return render_to_pdf('base/invoice_detail.html', context)

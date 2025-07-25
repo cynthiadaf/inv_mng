@@ -1,0 +1,10 @@
+{# invoice_form.html #}
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Edit Invoice</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Update</button>
+</form>
+{% endblock %}

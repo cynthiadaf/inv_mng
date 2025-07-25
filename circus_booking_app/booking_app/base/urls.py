@@ -39,6 +39,15 @@ urlpatterns = [
     path('trainer/bookings/<int:pk>/', views.BookingDetailView.as_view(), name='booking_detail'),
     path('trainer/bookings/<int:pk>/edit/', views.BookingUpdateView.as_view(), name='booking_edit'),
     path('trainer/bookings/<int:pk>/delete/', views.BookingDeleteView.as_view(), name='booking_delete'),
+
+
+    #Invoices
+    path('trainer/invoices/', views.InvoiceListView.as_view(), name='invoice_list'),
+    path('trainer/invoices/create/', views.InvoiceCreateView.as_view(), name='invoice_create'),
+    path('trainer/invoices/<int:pk>/', views.InvoiceDetailView.as_view(), name='invoice_detail'),
+    path('trainer/invoices/<int:pk>/edit/', views.InvoiceUpdateView.as_view(), name='invoice_edit'),
+    path('trainer/invoices/<int:pk>/delete/', views.InvoiceDeleteView.as_view(), name='invoice_delete'),
+    path('trainer/invoices/<int:pk>/pdf/', views.invoice_pdf, name='invoice_pdf'),
     # Client
     path('client/profile/', views.ClientProfileView.as_view(), name='client_profile'),
     path('client/profile/edit/', views.ClientProfileUpdateView.as_view(), name='client_profile_edit'),
@@ -66,6 +75,9 @@ urlpatterns = [
     #path('client/book/<int:pk>/', views.ClientBookSessionView.as_view(), name='book_session'),
     path('client/invoices/', views.ClientInvoiceListView.as_view(), name='client_invoices'),
     path('client/create/', views.ClientSelfCreateView.as_view(), name='client-create'),
+
+
+    #Invoices
 
     # Authentication
     path('login/', views.CustomLoginView.as_view(), name='login'),
