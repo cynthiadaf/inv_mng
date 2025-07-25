@@ -7,12 +7,18 @@
     <th>Session</th>
     <th>Client</th>
     <th>Status</th>
+    <th>Actions</th>
   </tr>
   {% for booking in bookings %}
     <tr>
       <td>{{ booking.session.title }} ({{ booking.session.date }} {{ booking.session.time }})</td>
       <td>{{ booking.client.user.get_full_name|default:booking.client.user.username }}</td>
       <td>{{ booking.status }}</td>
+      <td>
+        <a href="{% url 'booking_detail' booking.id %}">View</a>
+        <a href="{% url 'booking_edit' booking.id %}">Edit</a>
+        <a href="{% url 'booking_delete' booking.id %}">Delete</a>
+      </td>
     </tr>
   {% empty %}
     <tr>

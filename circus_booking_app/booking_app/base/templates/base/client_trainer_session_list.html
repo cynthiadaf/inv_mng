@@ -28,7 +28,7 @@
         
         <td>
           {% if session.bookings.count < session.max_clients %}
-            <form method="post" action="{% url 'session_booking_create' session.id %}">
+            <form method="post" action="{% url 'client_book_session' session.id %}">
               {% csrf_token %}
               <button type="submit">Book</button>
             </form>
@@ -37,8 +37,7 @@
            
           {% endif %}
           <a href="{% url 'session_detail' session.id %}">View</a>
-          <a href="{% url 'session_edit' session.id %}">Edit</a>
-          <a href="{% url 'session_delete' session.id %}">Delete</a>
+
         </td>
       </tr>
     {% empty %}

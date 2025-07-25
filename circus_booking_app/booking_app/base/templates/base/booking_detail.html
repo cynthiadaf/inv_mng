@@ -1,0 +1,12 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Booking Detail</h1>
+<p><strong>Client:</strong> {{ booking.client }}</p>
+<p><strong>Session:</strong> {{ booking.session }}</p>
+<p><strong>Status:</strong> {{ booking.status }}</p>
+
+<a href="{% url 'booking_edit' booking.id %}">Edit</a>
+<a href="{% url 'booking_delete' booking.id %}">Delete</a>
+<a href="{% url 'booking_list' %}">Back to Bookings</a>
+{% endblock %}
+

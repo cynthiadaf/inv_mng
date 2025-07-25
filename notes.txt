@@ -1,17 +1,16 @@
 NEXT STEPS
-new repo!
-- Finish CRUD for booking
-- Trainer book a client through a specific session
-- Trainer Detail page
+
 
 - Allow Clients 
--- Create their account
--- Be added to a class by a teacher
--- View sessions
--- Create their own session
+-- Create their own booking
 -- Update their own session
 -- Delete their own session
 
+
+- Relavant Profile Data and Class Data for invoices
+- Only do Invoices After Client and Trainer are fully set up
+-Invoice number based on user count rather than all IDs.
+-DELETING A PROFILE SHOULD LOG YOU OUT.
 
 
 
@@ -19,7 +18,7 @@ LONG TERM
 Separate the Log in as client and log in as trainer UX
 Client can see trainer pages and trainers cant see client pages
 Trainers can create an account for a client and clients can log in to book stuff (or clients can create their own account)
-
+Waitlist for cancellations
 
 - create templates for each point in user journey
 - Add buttons that display the templates
@@ -35,6 +34,8 @@ AUTH & SAFETY
 **
 Review To-Do list
 
+venv\Scripts\activate
+python manage.py runserver
 
 
 

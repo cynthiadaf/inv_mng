@@ -1,0 +1,16 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Remove Trainer</h1>
+<form method="post">
+  {% csrf_token %}
+  <label for="trainer">Select a trainer to remove:</label>
+  <select name="trainer_id" id="trainer">
+    {% for trainer in client.trainers.all %}
+      <option value="{{ trainer.id }}">{{ trainer.business_name }}</option>
+    {% empty %}
+      <option disabled>No trainers assigned.</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Remove Trainer</button>
+</form>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Bookings</h1>
+
+<table border="1">
+  <tr>
+    <th>Session</th>
+    <th>Trainer</th>
+    <th>Date</th>
+    <th>Time</th>
+    <th>Price</th>
+    <th>Status</th>
+    <th>Actions</th>
+  </tr>
+  {% for booking in bookings %}
+    <tr>
+      <td>{{ booking.session.title }} ({{ booking.session.date }} {{ booking.session.time }})</td>
+      <td>{{ booking.session.trainer.user.username }}</td>
+      <td>{{ booking.session.date }}</td>
+      <td>{{ booking.session.time }}</td>
+      <td>{{ booking.session.price }}</td>
+      <td>{{ booking.status }}</td>
+      <td>
+        <a href="{% url 'client_booking_detail' booking.id %}">View</a>
+        <a href="{% url 'client_booking_edit' booking.id %}">Edit</a>
+        <a href="{% url 'client_booking_delete' booking.id %}">Delete</a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="3">No bookings found.</td>
+    </tr>
+  {% endfor %}
+</table>
+
+<a href="{% url 'client_booking_create' %}">Book a new session</a>
+{% endblock %}

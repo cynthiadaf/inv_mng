@@ -8,7 +8,14 @@ class TrainerProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     business_name = models.CharField(max_length=255)
     email = models.EmailField()
-    phone = models.CharField(max_length=20, blank=True)
+    phone = models.CharField(max_length=15, blank=True,null=True)
+    role = models.CharField(max_length=50, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)  # Example field for user role
+    postal_code = models.CharField(max_length=20, blank=True, null=True)  # Example field for user role
+    bank_account_owner = models.CharField(max_length=100, blank=True, null=True) #Not to be confused with the user name
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    bank_sort_code = models.CharField(max_length=6, blank=True, null=True)
+    bank_account_number = models.CharField(max_length=8, blank=True, null=True)
 
     def __str__(self):
         return self.business_name  # or return self.user.get_full_name() or any field you prefer
@@ -17,6 +24,11 @@ class TrainerProfile(models.Model):
 class Client(models.Model):#ClientProfile
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     trainers = models.ManyToManyField(TrainerProfile, related_name='clients')
+    name = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    postal_code = models.CharField(max_length=20, blank=True, null=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)
     can_self_book = models.BooleanField(default=False)
 
     def __str__(self):

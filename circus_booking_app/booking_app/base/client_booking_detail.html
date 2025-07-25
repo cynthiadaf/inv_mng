@@ -1,0 +1,9 @@
+<h1>Booking Details</h1>
+
+<p><strong>Session:</strong> {{ booking.session }}</p>
+<p><strong>Status:</strong> {{ booking.status }}</p>
+
+<a href="{% url 'client_booking_edit' booking.id %}">Edit</a>
+<a href="{% url 'client_booking_delete' booking.id %}">Delete</a>
+<a href="{% url 'client_booking_list' %}">Back to Bookings</a>
+{% endblock %}

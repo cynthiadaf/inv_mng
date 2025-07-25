@@ -1,0 +1,13 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Select Client to Remove</h1>
+<form method="post">
+    {% csrf_token %}
+    <select name="client_id">
+        {% for client in clients %}
+            <option value="{{ client.id }}">{{ client.user.get_full_name|default:client.user.username }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit">Remove Client</button>
+</form>
+{% endblock %}

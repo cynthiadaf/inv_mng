@@ -7,11 +7,40 @@
   <ul>
     {% for trainer in client.trainers.all %}
       <li>{{ trainer.business_name }}</li>
+      <a href="{% url 'trainer_profile_detail' trainer.id %}">View Profile</a>
+      <form action="{% url 'client_remove_trainer' %}" method="post" style="display:inline;">
+        {% csrf_token %}
+        <input type="hidden" name="trainer_id" value="{{ trainer.id }}">
+        <button type="submit">Remove Trainer</button>
+      </form>
     {% empty %}
       <li>No trainers assigned.</li>
     {% endfor %}
   </ul>
+
+<h2>Your Profile</h2>
+<a href="{% url 'client_profile' %}">View Profile</a>
+<a href="{% url 'client_profile_edit' %}">Edit Profile</a>
+
+<h2>Manage Your Trainers</h2>
+<p>Manage your trainers effectively.</p>
+<a href="{% url 'client_trainer_list_all' %}">View All Trainers</a>
+<a href="{% url 'client_trainer_list' %}">View Your Trainers</a>
+<a href="{% url 'client_add_trainer' %}">Add Trainer</a>
+<a href="{% url 'client_remove_trainer' %}">Remove Trainer</a>
+
+<h2>Manage Your Sessions</h2>
+<p>Manage your sessions effectively.</p>
+<a href="{% url 'client_trainer_session_list' %}">View All Sessions</a>
+
+<h2>Manage Your Bookings</h2>
+<p>Manage your bookings effectively.</p>
+<a href="{% url 'client_booking_list' %}">View All Bookings</a>
+<a href="{% url 'client_booking_create' %}">Book a new session</a>
+<p></p>
+
 {% endblock %}
+
 
 
 <!-- client_dashboard.html -->

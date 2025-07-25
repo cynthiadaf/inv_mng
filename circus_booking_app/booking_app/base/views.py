@@ -1,3 +1,4 @@
+from django import forms
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.views.generic import (
@@ -15,9 +16,10 @@ from django.contrib.auth.views import LoginView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
+from django.contrib.auth import get_user_model
 
 
-from .forms import TrainerRegisterForm,  TrainerAddClientForm, TrainerEditClientForm
+from .forms import TrainerRegisterForm, ClientRegisterForm,  TrainerAddClientForm, TrainerEditClientForm, TrainerProfileForm
 from .models import TrainerProfile
 
 
@@ -41,7 +43,7 @@ class CustomLoginView(LoginView):
         return reverse_lazy('home')
 
 
-class RegisterPage(FormView):
+class TrainerRegisterPage(FormView):
     template_name = 'base/register.html'
     form_class = TrainerRegisterForm
     redirect_authenticated_user = True
@@ -65,6 +67,35 @@ class RegisterPage(FormView):
             return redirect('home')
         return super().get(*args, **kwargs)
     
+
+
+class ClientRegisterPage(FormView):
+    template_name = 'base/register_client.html'
+    form_class = ClientRegisterForm
+    redirect_authenticated_user = True
+    success_url = reverse_lazy('client_dashboard')
+
+    def form_valid(self, form):
+        user = form.save()
+        # Create the Client instance
+        Client.objects.create(
+            user=user,
+            name=form.cleaned_data['username'],
+            email=form.cleaned_data['email'],
+            phone=form.cleaned_data['phone'],
+            can_self_book=True
+        )
+        if user is not None:
+            login(self.request, user)
+            # Reload user to ensure reverse relation is available
+            self.request.user = get_user_model().objects.get(pk=user.pk)
+        return super().form_valid(form)
+
+    def get(self, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect('client_dashboard')
+        return super().get(*args, **kwargs)
+    
 # views.py
 
 
@@ -78,26 +109,21 @@ def client_can_book(client):
 # -------- CLIENT VIEWS -------- #
 
 class ClientDashboardView(LoginRequiredMixin, TemplateView):
-    model = Client
     template_name = 'base/client_dashboard.html'
-   
+
     def dispatch(self, request, *args, **kwargs):
         if not hasattr(request.user, 'client'):
             return redirect('trainer_dashboard')
         client = Client.objects.filter(user=request.user).first()
         if not client:
-            return redirect('home') #TODO: redirect to a logical page
+            return redirect('home')
         return super().dispatch(request, *args, **kwargs)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         client = Client.objects.filter(user=self.request.user).first()
         context['client'] = client
-        # Trainers for this client
         context['trainers'] = client.trainers.all() if client else []
-        # Sessions for this client
-        #context['sessions'] = Session.objects.filter(clients=client) if client else []
-
         return context
    
     '''
@@ -116,7 +142,184 @@ class ClientDashboardView(LoginRequiredMixin, TemplateView):
         context['client'] = Client.objects.filter(user=self.request.user).first()
         return context
     '''
- 
+
+class ClientProfileView(LoginRequiredMixin, DetailView):
+    model = Client
+    template_name = 'base/client_profile.html'
+    context_object_name = 'client'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Client, user=self.request.user)
+
+class ClientProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = Client
+    form_class = TrainerEditClientForm
+    template_name = 'base/client_form.html'
+    success_url = reverse_lazy('client_profile')
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Client, user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user_instance'] = self.object.user
+        return kwargs
+    
+class ClientProfileDeleteView(LoginRequiredMixin, DeleteView):
+    model = Client
+    template_name = 'base/client_confirm_delete.html'
+    success_url = reverse_lazy('home')
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Client, user=self.request.user)
+    
+
+class ClientTrainerListAllView(LoginRequiredMixin, ListView):
+    model = TrainerProfile
+    template_name = 'base/client_trainer_list_all.html'
+    context_object_name = 'trainers'
+
+    def get_queryset(self):
+        return TrainerProfile.objects.all()  # Show all trainers
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['client'] = Client.objects.filter(user=self.request.user).first()
+        return context
+    
+class ClientTrainerListView(LoginRequiredMixin, ListView):
+    model = TrainerProfile
+    template_name = 'base/client_trainer_list.html'
+    context_object_name = 'trainers'
+
+    def get_queryset(self):
+        client = Client.objects.filter(user=self.request.user).first()
+        if client:
+            return client.trainers.all()  # Show trainers for this client
+        return TrainerProfile.objects.none()  # No trainers if client not found
+    
+class ClientAddTrainerView(LoginRequiredMixin, View):
+    def get(self, request):
+        trainers = TrainerProfile.objects.all()
+        return render(request, 'base/client_add_trainer.html', {'trainers': trainers})
+
+    def post(self, request):
+        trainer_id = request.POST.get('trainer')
+        trainer = get_object_or_404(TrainerProfile, id=trainer_id)
+        client = Client.objects.filter(user=request.user).first()
+        if not client:
+            return redirect('client-create')
+        if trainer in client.trainers.all():
+            messages.error(request, "Trainer already added.")
+        else:
+            client.trainers.add(trainer)
+            messages.success(request, f"Added {trainer.user.get_full_name() or trainer.user.username} as your trainer.")
+        return redirect('client_trainer_list')
+    
+
+class ClientRemoveTrainerView(LoginRequiredMixin, View):
+    def get(self, request):
+        client = Client.objects.filter(user=request.user).first()
+        if not client:
+            return redirect('client-create')
+        return render(request, 'base/client_remove_trainer.html', {'client': client})
+
+    def post(self, request):
+        trainer_id = request.POST.get('trainer')
+        trainer = get_object_or_404(TrainerProfile, id=trainer_id)
+        client = Client.objects.filter(user=request.user).first()
+        if not client:
+            return redirect('client-create')
+        if trainer in client.trainers.all():
+            client.trainers.remove(trainer)
+            messages.success(request, f"Removed {trainer.user.get_full_name() or trainer.user.username} from your trainers.")
+        else:
+            messages.error(request, "Trainer not found in your list.")
+        return redirect('client_trainer_list')
+
+class ClientTrainerSessionListView(LoginRequiredMixin, ListView):
+    model = Session
+    template_name = 'base/client_trainer_session_list.html'
+    context_object_name = 'sessions'
+
+    def get_queryset(self):
+        client = Client.objects.filter(user=self.request.user).first()
+        trainer_id = self.kwargs.get('pk')
+        if trainer_id:
+            trainer = get_object_or_404(TrainerProfile, id=trainer_id)
+            return Session.objects.filter(trainer=trainer).exclude(date__lt=timezone.now()).order_by('date', 'time')
+        # If no pk, show sessions for all trainers assigned to this client
+        if client:
+            return Session.objects.filter(trainer__in=client.trainers.all()).exclude(date__lt=timezone.now()).order_by('trainer', 'date', 'time')
+        return Session.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        trainer_id = self.kwargs.get('pk')
+        client = Client.objects.filter(user=self.request.user).first()
+        if trainer_id:
+            context['trainer'] = get_object_or_404(TrainerProfile, id=trainer_id)
+        else:
+            context['trainers'] = client.trainers.all() if client else TrainerProfile.objects.none()
+        return context
+    
+
+class ClientBookingListView(LoginRequiredMixin, ListView):
+    model = Booking
+    template_name = 'base/client_booking_list.html'
+    context_object_name = 'bookings'
+
+    def get_queryset(self):
+        client = Client.objects.filter(user=self.request.user).first()
+        if client:
+            return Booking.objects.filter(client=client).select_related('session__trainer').order_by('-session__date', '-session__time')
+        return Booking.objects.none()
+    
+class ClientBookingCreateView(LoginRequiredMixin, CreateView):
+    model = Booking
+    fields = ['session']  # Allow client to select a session
+    template_name = 'base/client_booking_form.html'
+    success_url = reverse_lazy('client_booking_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        self.client = Client.objects.filter(user=request.user).first()
+        if not self.client:
+            return redirect('client-create')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Exclude sessions the client has already booked
+        booked_sessions = Booking.objects.filter(client=self.client).values_list('session_id', flat=True)
+        form.fields['session'].queryset = Session.objects.filter(
+            trainer__in=self.client.trainers.all()
+        ).exclude(
+            date__lt=timezone.now()
+        ).exclude(
+            id__in=booked_sessions
+        )
+        return form
+
+    def form_valid(self, form):
+        form.instance.client = self.client
+        session = form.instance.session
+        # Check for existing booking
+        if Booking.objects.filter(client=self.client, session=session).exists():
+            messages.error(self.request, "You have already booked this session.")
+            return redirect('client_booking_list')
+        if not client_can_book(self.client):
+            messages.error(self.request, "You cannot book sessions at this time.")
+            return redirect('client_dashboard')
+        if session.is_full():
+            messages.error(self.request, "This session is full.")
+            return redirect('client_trainer_session_list')
+        return super().form_valid(form)
+
+
+    
+
+
+
 class ClientSelfCreateView(LoginRequiredMixin, CreateView):
     model = Client
     fields = ['can_self_book', 'trainers']  # allow user to select trainers if desired
@@ -143,9 +346,57 @@ class ClientBookSessionView(LoginRequiredMixin, View):
             messages.error(request, "This session is full.")
             return redirect('client_dashboard')
 
-        Booking.objects.get_or_create(client=client, session=session, defaults={'status': 'booked'})
+        if Booking.objects.filter(client=client, session=session).exists():
+            messages.error(request, "You have already booked this session.")
+            return redirect('client_dashboard')
+
+        Booking.objects.create(client=client, session=session, status='booked')
         messages.success(request, f"Booked {session.title} successfully.")
         return redirect('client_dashboard')
+    
+class ClientBookingDetailView(LoginRequiredMixin, DetailView):
+    model = Booking
+    template_name = 'base/client_booking_detail.html'
+    context_object_name = 'booking'
+
+    def get_object(self, queryset=None):
+        booking = super().get_object(queryset)
+        if booking.client.user != self.request.user:
+            raise HttpResponseForbidden("You do not have permission to view this booking.")
+        return booking
+    
+class ClientBookingUpdateView(LoginRequiredMixin, UpdateView):
+    model = Booking
+    fields = ['session']  # Allow client to change session or status
+    template_name = 'base/client_booking_form.html'
+    success_url = reverse_lazy('client_booking_list')
+
+    def get_object(self, queryset=None):
+        booking = super().get_object(queryset)
+        if booking.client.user != self.request.user:
+            raise HttpResponseForbidden("You do not have permission to edit this booking.")
+        return booking
+
+    def form_valid(self, form):
+        if not client_can_book(form.instance.client):
+            messages.error(self.request, "You cannot modify bookings at this time.")
+            return redirect('client_dashboard')
+        return super().form_valid(form)
+    
+class ClientBookingDeleteView(LoginRequiredMixin, DeleteView):
+    model = Booking
+    template_name = 'base/client_booking_confirm_delete.html'
+    success_url = reverse_lazy('client_booking_list')
+
+    def get_object(self, queryset=None):
+        booking = super().get_object(queryset)
+        if booking.client.user != self.request.user:
+            raise HttpResponseForbidden("You do not have permission to delete this booking.")
+        return booking
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Booking deleted successfully.")
+        return super().delete(request, *args, **kwargs)
 
 
 class ClientInvoiceListView(LoginRequiredMixin, ListView):
@@ -183,8 +434,45 @@ class TrainerDashboardView(LoginRequiredMixin, TemplateView):
         trainer = self.request.user.trainerprofile
         context['sessions'] = Session.objects.filter(trainer=trainer)
         context['clients'] = Client.objects.filter(trainers=trainer)
+        context['trainer'] = trainer
         return context
+
+class TrainerProfileView(LoginRequiredMixin, DetailView):
+    model = TrainerProfile
+    template_name = 'base/trainer_profile.html'
+    context_object_name = 'trainer'
+
+    def get_object(self, queryset=None):
+        pk = self.kwargs.get('pk')
+        if pk:
+            return get_object_or_404(TrainerProfile, pk=pk)
+        return get_object_or_404(TrainerProfile, user=self.request.user)
+
+
+class TrainerProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = TrainerProfile
+    form_class = TrainerProfileForm
+    template_name = 'base/trainer_profile_form.html'
+    success_url = reverse_lazy('trainer_profile')
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(TrainerProfile, user=self.request.user)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user_instance'] = self.request.user
+        return kwargs
     
+class TrainerProfileDeleteView(LoginRequiredMixin, DeleteView):
+    model = TrainerProfile
+    template_name = 'base/trainer_profile_confirm_delete.html'
+    success_url = reverse_lazy('home')
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(TrainerProfile, user=self.request.user)
+    
+
+
 class TrainerClientCreateView(LoginRequiredMixin, FormView):
     template_name = 'base/client_form.html'
     form_class = TrainerAddClientForm
@@ -204,7 +492,57 @@ class TrainerClientCreateView(LoginRequiredMixin, FormView):
         # Optionally, send credentials to the client via email here
         return super().form_valid(form)
     
+class TrainerAddExistingClientView(LoginRequiredMixin, FormView):
+    template_name = 'base/trainer_add_existing_client.html'
+    success_url = reverse_lazy('trainer_client_list')
 
+    def get_form(self):
+        # Dynamically create a form with a dropdown of all clients not already assigned to this trainer
+        class ExistingClientForm(forms.Form):
+            client = forms.ModelChoiceField(
+                queryset=Client.objects.exclude(trainers=self.request.user.trainerprofile),
+                required=True,
+                label="Select Existing Client"
+            )
+        return ExistingClientForm(self.request.POST or None)
+
+    def form_valid(self, form):
+        client = form.cleaned_data['client']
+        trainer_profile = self.request.user.trainerprofile
+        client.trainers.add(trainer_profile)
+        messages.success(self.request, f"{client.user.get_full_name() or client.user.username} added to your client list.")
+        return super().form_valid(form)
+    
+class TrainerRemoveExistingClientView(LoginRequiredMixin, View):
+    """
+    Allows a trainer to remove an existing client from their client list.
+    If no pk is provided, shows a form to select a client to remove.
+    """
+    def get(self, request, pk=None):
+        trainer_profile = request.user.trainerprofile
+        if pk is None:
+            # Show a form to select a client to remove
+            clients = Client.objects.filter(trainers=trainer_profile)
+            return render(request, 'base/trainer_remove_client_select.html', {'clients': clients})
+        client = get_object_or_404(Client, pk=pk)
+        return render(request, 'base/trainer_remove_client_confirm.html', {'client': client})
+
+    def post(self, request, pk=None):
+        trainer_profile = request.user.trainerprofile
+        if pk is None:
+            # Get client id from form submission and redirect to confirmation
+            client_id = request.POST.get('client_id')
+            if not client_id:
+                messages.error(request, "No client selected.")
+                return redirect('trainer_client_remove')
+            return redirect('trainer_client_remove', pk=client_id)
+        client = get_object_or_404(Client, pk=pk)
+        if trainer_profile in client.trainers.all():
+            client.trainers.remove(trainer_profile)
+            messages.success(request, f"{client.user.get_full_name() or client.user.username} has been removed from your client list.")
+        else:
+            messages.error(request, "This client is not assigned to you.")
+        return redirect('trainer_client_list')
 class TrainerClientListView(LoginRequiredMixin, ListView):
     '''
     List all clients for the trainer.'''
@@ -246,6 +584,8 @@ class TrainerClientDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, queryset=None):
         # Only allow deletion if the client belongs to this trainer
         return get_object_or_404(Client, id=self.kwargs['pk'], trainers=self.request.user.trainerprofile)
+    
+
 
 
 class TrainerSessionListView(LoginRequiredMixin, ListView):
@@ -308,13 +648,17 @@ class SessionBookingCreateView(LoginRequiredMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         self.session = get_object_or_404(Session, id=self.kwargs['pk'], trainer=request.user.trainerprofile)
+        # Only clients for this trainer not already booked for this session
+        already_booked = Booking.objects.filter(session=self.session).values_list('client_id', flat=True)
+        self.clients_qs = Client.objects.filter(trainers=request.user.trainerprofile).exclude(id__in=already_booked)
+        if not self.clients_qs.exists():
+            messages.error(request, "You have no available clients to add to this session.")
+            return redirect('session_detail', pk=self.session.id)
         return super().dispatch(request, *args, **kwargs)
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
-        # Limit clients to those assigned to this trainer and not already booked for this session
-        already_booked = Booking.objects.filter(session=self.session).values_list('client_id', flat=True)
-        form.fields['client'].queryset = Client.objects.filter(trainers=self.request.user.trainerprofile).exclude(id__in=already_booked)
+        form.fields['client'].queryset = self.clients_qs
         return form
 
     def form_valid(self, form):
@@ -323,12 +667,10 @@ class SessionBookingCreateView(LoginRequiredMixin, CreateView):
         if self.session.is_full():
             messages.error(self.request, "Session is full.")
             return redirect('session_detail', pk=self.session.id)
-        # Check for unpaid invoices
         unpaid = Invoice.objects.filter(client=client, sent=True, paid=False, special=False).exists()
         if unpaid:
             messages.error(self.request, "Client has unpaid invoices.")
             return redirect('session_detail', pk=self.session.id)
-        # Create booking
         form.instance.session = self.session
         form.instance.status = 'booked'
         messages.success(self.request, f"{client.user.get_full_name() or client.user.username} successfully booked.")
@@ -392,26 +734,55 @@ class BookingCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy('booking_list')
+    
+class BookingDetailView(LoginRequiredMixin, DetailView):
+    model = Booking
+    template_name = 'base/booking_detail.html'
+    context_object_name = 'booking'
 
+    def get_object(self, queryset=None):
+        booking = super().get_object(queryset)
+        if booking.session.trainer != self.request.user.trainerprofile:
+            raise HttpResponseForbidden("You do not have permission to view this booking.")
+        return booking
+    
+class BookingUpdateView(LoginRequiredMixin, UpdateView):
+    model = Booking
+    fields = ['client', 'session', 'status']
+    template_name = 'base/booking_form.html'
+    success_url = reverse_lazy('booking_list')
 
-'''
-class AddClientBookingView(LoginRequiredMixin, View):
-    def post(self, request, session_id, client_id):
-        trainer = request.user.trainerprofile
-        session = get_object_or_404(Session, id=session_id, trainer=trainer)
-        client = get_object_or_404(Client, id=client_id, trainers=trainer)
+    def get_object(self, queryset=None):
+        booking = super().get_object(queryset)
+        if booking.session.trainer != self.request.user.trainerprofile:
+            raise HttpResponseForbidden("You do not have permission to edit this booking.")
+        return booking
 
-        if session.is_full():
-            messages.error(request, "Session is full.")
-            return redirect('session_detail', pk=session_id)
+    def form_valid(self, form):
+        session = form.cleaned_data['session']
+        client = form.cleaned_data['client']
+
+        if session.is_full() and form.instance.status == 'booked':
+            messages.error(self.request, "Session is full.")
+            return redirect('booking_edit', pk=form.instance.id)
 
         unpaid = Invoice.objects.filter(client=client, sent=True, paid=False, special=False).exists()
         if unpaid:
-            messages.error(request, "Client has unpaid invoices.")
-            return redirect('session_detail', pk=session_id)
+            messages.error(self.request, "Client has unpaid invoices.")
+            return redirect('booking_edit', pk=form.instance.id)
 
-        Booking.objects.get_or_create(client=client, session=session, defaults={'status': 'booked'})
-        messages.success(request, "Client successfully booked.")
-        return redirect('session_detail', pk=session_id)
-'''
+        return super().form_valid(form)
+    
+class BookingDeleteView(LoginRequiredMixin, DeleteView):
+    model = Booking
+    template_name = 'base/booking_confirm_delete.html'
+    success_url = reverse_lazy('booking_list')
+
+    def get_object(self, queryset=None):
+        booking = super().get_object(queryset)
+        if booking.session.trainer != self.request.user.trainerprofile:
+            raise HttpResponseForbidden("You do not have permission to delete this booking.")
+        return booking
+
+
 

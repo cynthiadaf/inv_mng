@@ -1,0 +1,21 @@
+<h1>Trainer Profile</h1>
+
+<p>Name: {{ trainer.name}}</p>
+<p>Email: {{ trainer.email }}</p>
+<p>Phone: {{ trainer.phone }}</p>
+<p>Address: {{ trainer.address }}</p>
+<p>Postal Code: {{ trainer.postal_code }}</p>
+<p>Role: {{ trainer.role }}</p>
+
+<h2>Bank Details:</h2>
+<p>Bank Account Owner: {{ trainer.bank_account_owner }}</p>
+<p>Bank Name: {{ trainer.bank_name }}</p>
+<p>Bank Sort Code: {{ trainer.bank_sort_code }}</p>
+<p>Bank Account Number: {{ trainer.bank_account_number }}</p>
+
+
+
+<a href="{% url 'trainer_profile_edit' %}">Edit Profile</a>
+<a href="{% url 'trainer_profile_delete' %}">Delete Profile</a>
+<a href="{% url 'trainer_dashboard' %}">Back to Dashboard</a>
+

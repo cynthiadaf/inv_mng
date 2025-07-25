@@ -23,6 +23,7 @@
             <a href="{% url 'trainer_client_detail' client.id %}">View</a>
             <a href="{% url 'trainer_client_edit' client.id %}">Edit</a>
             <a href="{% url 'trainer_client_delete' client.id %}">Delete</a>
+            <a href="{% url 'trainer_client_remove' client.id %}">Remove</a>
         </td>
     </tr>
     {% empty %}
@@ -31,4 +32,6 @@
     </tr>
     {% endfor %}
 </table>
+
+<a href="{% url 'trainer_client_add' %}">Add Existing Client</a>
 {% endblock %}

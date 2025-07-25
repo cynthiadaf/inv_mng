@@ -1,0 +1,41 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>All Trainers</h1>
+<table border="1">
+  <tr>
+    <th>Business Name</th>
+    <th>Email</th>
+    <th>Phone</th>
+    <th>Address</th>
+    <th>Actions</th>
+  </tr>
+  {% for trainer in trainers %}
+    <tr>
+      <td>{{ trainer.business_name }}</td>
+      <td>{{ trainer.email }}</td>
+      <td>{{ trainer.phone }}</td>
+      <td>{{ trainer.address }}</td>
+      <td>
+        <a href="{% url 'trainer_profile_detail' trainer.id %}">View Profile</a>
+        {% if trainer in client.trainers.all %}
+          <form action="{% url 'client_remove_trainer' %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="trainer" value="{{ trainer.id }}">
+            <button type="submit">Remove Trainer</button>
+          </form>
+        {% else %}
+          <form action="{% url 'client_add_trainer' %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="trainer" value="{{ trainer.id }}">
+            <button type="submit">Add Trainer</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% empty %}
+    <tr>
+      <td colspan="5">No trainers found.</td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

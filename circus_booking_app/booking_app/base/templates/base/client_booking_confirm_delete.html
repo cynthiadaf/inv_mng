@@ -1,0 +1,11 @@
+{% extends 'base/base.html' %}
+{% block content %}
+<h1>Confirm Delete Booking</h1>
+<p>Are you sure you want to delete the booking for {{ booking.client }} in session {{ booking.session }}?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Confirm</button>
+    <a href="{% url 'booking_detail' booking.id %}">Cancel</a>
+</form>
+{% endblock %}

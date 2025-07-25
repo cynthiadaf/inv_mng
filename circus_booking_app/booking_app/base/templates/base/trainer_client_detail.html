@@ -3,6 +3,9 @@
 <p>Client: {{ client.user.get_username }}</p>
 <p>Full Name: {{ client.user.get_full_name }}</p>
 <p>Email: {{ client.user.email }}</p>
+<p>Phone: {{ client.phone }}</p>
+<p>Address: {{ client.address }}</p>
+<p>Postal Code: {{ client.postal_code }}</p>
 <p>Can Self Book: {{ client.can_self_book|yesno:"Yes,No" }}</p>
 
 <a href="{% url 'trainer_client_edit' client.id %}">Edit</a>

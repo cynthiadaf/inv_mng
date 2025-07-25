@@ -3,9 +3,20 @@
 {% block content %}
 <h1>Trainer Dashboard</h1>
 
+
+<h2>Profile:</h2>
+<p>Business Name: {{ trainer.business_name }}</p>
+
+
+
+<a href="{% url 'trainer_profile_edit' %}">Update Profile</a>
+<a href="{% url 'trainer_profile' %}">View Profile</a>
+
 <p>Manage your clients effectively.</p>
 <a href="{% url 'trainer_client_list' %}">View Clients</a>
 <a href="{% url 'trainer_client_create' %}">Create New Client</a>
+<a href="{% url 'trainer_client_add' %}">Add New Client</a>
+<a href="{% url 'trainer_client_remove' %}">Remove Existing Client</a>
 
 <p>Manage your sessions effectively.</p>
 <a href="{% url 'trainer_session_list' %}">View Sessions</a>
